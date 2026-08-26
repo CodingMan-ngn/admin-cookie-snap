@@ -191,11 +191,9 @@
   </div>
 
   <script>
-    // ========== CONFIGURATION ==========
     const WORKER_URL = "https://cookie-snap-keys.j26064135.workers.dev";
-    let ADMIN_PASSWORD = ""; // will be set via prompt
+    let ADMIN_PASSWORD = "";
 
-    // Ask for password on load
     (function init() {
       ADMIN_PASSWORD = prompt("Enter Admin Password:");
       if (!ADMIN_PASSWORD) {
@@ -207,7 +205,6 @@
 
     let keyData = [];
 
-    // ========== COMMAND SENDER ==========
     async function run(cmd, timeParam = "") {
       if (!ADMIN_PASSWORD) {
         ADMIN_PASSWORD = prompt("Enter Admin Password:");
@@ -237,7 +234,6 @@
       }
     }
 
-    // ========== ACTIONS ==========
     function createKey() {
       const duration = document.getElementById('duration').value;
       if (duration === "perm") run("perm");
@@ -256,7 +252,6 @@
       run(cmd);
     }
 
-    // ========== FETCH KEYS ==========
     async function fetchKeys() {
       if (!ADMIN_PASSWORD) {
         ADMIN_PASSWORD = prompt("Enter Admin Password:");
