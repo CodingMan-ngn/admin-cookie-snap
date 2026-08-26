@@ -16,8 +16,6 @@
       padding: 20px;
       color: #fff;
     }
-
-    /* ========== Golden Texture Card ========== */
     .golden-card {
       width: 100%;
       max-width: 700px;
@@ -54,7 +52,6 @@
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-
     .inner-card {
       background: rgba(0, 0, 0, 0.6);
       border-radius: 10px;
@@ -146,7 +143,6 @@
     <h1 style="text-align:center; color:#2d2d2d; text-shadow:0 0 10px rgba(255,255,255,0.5);">🍪 Cookie Snap Admin</h1>
     <p style="text-align:center; color:#2d2d2d; margin-bottom:20px;">Gold Edition</p>
 
-    <!-- Create Key -->
     <div class="inner-card">
       <div class="card-title">🔑 Create Key</div>
       <div class="input-group">
@@ -166,14 +162,12 @@
       <button class="btn btn-success" onclick="createKey()">➕ Create Key</button>
     </div>
 
-    <!-- List Keys -->
     <div class="inner-card">
       <div class="card-title">📋 List Keys (with countdown)</div>
       <div id="keyList" class="key-list"></div>
       <button class="btn" onclick="fetchKeys()">🔄 Refresh Keys</button>
     </div>
 
-    <!-- Revoke Key -->
     <div class="inner-card">
       <div class="card-title">❌ Revoke Key</div>
       <div class="input-group">
@@ -183,7 +177,6 @@
       <button class="btn btn-danger" onclick="revokeKey()">❌ Revoke</button>
     </div>
 
-    <!-- Custom Command -->
     <div class="inner-card">
       <div class="card-title">⚙️ Custom Command</div>
       <div class="input-group">
@@ -258,7 +251,6 @@
     function runCustom() {
       const cmd = document.getElementById('customCmd').value.trim();
       if (!cmd) return alert("Please enter a command");
-      // Parse possible time and profile from command string
       const parts = cmd.split(/\s+/);
       if (parts[0].toLowerCase() === "create") {
         const timeParam = parts[1] || "1d";
@@ -310,7 +302,6 @@
         name.textContent = item.key;
         left.appendChild(name);
 
-        // Show profile if available
         if (item.profile) {
           const profile = document.createElement('div');
           profile.className = 'key-profile';
@@ -318,11 +309,10 @@
           left.appendChild(profile);
         }
 
-        // Show device info if available
         if (item.deviceInfo) {
           const devInfo = document.createElement('div');
           devInfo.className = 'key-device';
-          devInfo.textContent = `💻 ${item.deviceInfo.platform} | IP: ${item.deviceInfo.ip} | UA: ${item.deviceInfo.userAgent?.substring(0, 40)}...`;
+          devInfo.textContent = `💻 ${item.deviceInfo.platform} | IP: ${item.deviceInfo.ip}`;
           left.appendChild(devInfo);
         }
 
