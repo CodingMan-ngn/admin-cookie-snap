@@ -1,329 +1,211 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cookie Snap Admin</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #1a1a1a;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      color: #fff;
+const ADMIN_PASSWORD = "invisible"; // ← THIS IS YOUR PASSWORD
+const DISCORD_ADMIN_WEBHOOK = "https://discord.com/api/webhooks/1542133586868568196/WQn3sUnqgm6wsfdP20EtMrFKGCeLBYRpbC0Xk-KmoOkVvJx8tcSejP287S4r__JW8RPx";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
 
-    /* ========== Golden Texture Card ========== */
-    .golden-card {
-      width: 100%;
-      max-width: 600px;
-      border-radius: 16px;
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%);
-      background-size: 200% 200%;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      animation: goldShimmer 6s ease infinite;
-      transition: transform 0.4s ease, box-shadow 0.4s ease;
-      padding: 20px;
-    }
-    .golden-card::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -75%;
-      width: 50%;
-      height: 100%;
-      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
-      transform: skewX(-20deg);
-      transition: left 0.6s ease;
-    }
-    .golden-card:hover {
-      transform: scale(1.02) translateY(-5px);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.4), 0 0 25px rgba(255,215,0,0.7);
-    }
-    .golden-card:hover::after {
-      left: 125%;
-    }
-    @keyframes goldShimmer {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .inner-card {
-      background: rgba(0, 0, 0, 0.6);
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
-    }
-    .card-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      margin-bottom: 15px;
-      color: #fcf6ba;
-      text-shadow: 0 0 5px rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-      font-size: 1rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728);
-      color: #1a1a1a;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255,215,0,0.5);
-    }
-    .btn-danger { background: linear-gradient(135deg, #e74c3c, #ff6b6b); color: white; }
-    .btn-success { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
-    .input-group { margin-bottom: 15px; }
-    .input-group label { display: block; margin-bottom: 6px; color: #fcf6ba; font-size: 0.9rem; }
-    .input-group select, .input-group input {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: 2px solid #b38728;
-      background: #1a1a1a;
-      color: white;
-      font-size: 1rem;
-    }
-    .input-group select:focus, .input-group input:focus { outline: none; border-color: #fcf6ba; }
-    .key-list { margin-top: 10px; }
-    .key-item {
-      background: rgba(0,0,0,0.7);
-      border: 1px solid #b38728;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .key-name { font-family: monospace; color: #fcf6ba; font-size: 1.1rem; font-weight: bold; }
-    .key-countdown { font-size: 0.9rem; color: #ffd700; font-weight: 600; }
-    #output {
-      margin-top: 20px;
-      padding: 15px;
-      background: rgba(0,0,0,0.7);
-      border-radius: 10px;
-      border-left: 4px solid #ffd700;
-      color: #fcf6ba;
-      min-height: 60px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .error { color: #ff6b6b; }
-    .success { color: #2ecc71; }
-    .footer { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #fcf6ba; }
-    @media (max-width: 600px) { .golden-card { width: 100%; } }
-  </style>
-</head>
-<body>
-  <div class="golden-card">
-    <h1 style="text-align:center; color:#2d2d2d; text-shadow:0 0 10px rgba(255,255,255,0.5);">🍪 Cookie Snap Admin</h1>
-    <p style="text-align:center; color:#2d2d2d; margin-bottom:20px;">Gold Edition</p>
-
-    <!-- Create Key -->
-    <div class="inner-card">
-      <div class="card-title">🔑 Create Key</div>
-      <div class="input-group">
-        <label for="duration">Duration:</label>
-        <select id="duration">
-          <option value="1d">1 Day</option>
-          <option value="1w">1 Week</option>
-          <option value="1m">1 Month</option>
-          <option value="1y">1 Year</option>
-          <option value="perm">Permanent</option>
-        </select>
-      </div>
-      <button class="btn btn-success" onclick="createKey()">➕ Create Key</button>
-    </div>
-
-    <!-- List Keys -->
-    <div class="inner-card">
-      <div class="card-title">📋 List Keys (with countdown)</div>
-      <div id="keyList" class="key-list"></div>
-      <button class="btn" onclick="fetchKeys()">🔄 Refresh Keys</button>
-    </div>
-
-    <!-- Revoke Key -->
-    <div class="inner-card">
-      <div class="card-title">❌ Revoke Key</div>
-      <div class="input-group">
-        <label for="revokeKey">Enter key to revoke</label>
-        <input type="text" id="revokeKey" placeholder="e.g., CS-ABC123">
-      </div>
-      <button class="btn btn-danger" onclick="revokeKey()">❌ Revoke</button>
-    </div>
-
-    <!-- Custom Command -->
-    <div class="inner-card">
-      <div class="card-title">⚙️ Custom Command</div>
-      <div class="input-group">
-        <label for="customCmd">Any command (e.g., revoke CS-123)</label>
-        <input type="text" id="customCmd" placeholder="e.g., revoke CS-123">
-      </div>
-      <button class="btn" onclick="runCustom()">▶️ Run</button>
-    </div>
-
-    <div id="output">Waiting…</div>
-    <div class="footer">Cookie Snap • v5.0 • Admin</div>
-  </div>
-
-  <script>
-    // ========== CONFIGURATION ==========
-    const WORKER_URL = "https://cookie-snap-keys.j26064135.workers.dev";
-    let ADMIN_PASSWORD = ""; // will be set via prompt
-
-    // Ask for password on load
-    (function init() {
-      ADMIN_PASSWORD = prompt("Enter Admin Password:");
-      if (!ADMIN_PASSWORD) {
-        alert("Password required. Reloading…");
-        location.reload();
+    try {
+      // 1. Generate One-Time Token
+      if (path === "/generate-token") {
+        const token = 'TK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        await env.KEYS.put('token:' + token, JSON.stringify({ created: Date.now() }), { expirationTtl: 120 });
+        return json({ success: true, token: token });
       }
-      fetchKeys();
-    })();
 
-    let keyData = [];
-
-    // ========== COMMAND SENDER ==========
-    async function run(cmd, timeParam = "") {
-      if (!ADMIN_PASSWORD) {
-        ADMIN_PASSWORD = prompt("Enter Admin Password:");
-        if (!ADMIN_PASSWORD) return;
+      // 2. Claim Key
+      if (path === "/claim") {
+        const token = url.searchParams.get("token");
+        const dataCode = url.searchParams.get("data");
+        if (!token || !dataCode) return json({ success: false, error: "Missing token or LootLabs data" });
+        const tokenData = await env.KEYS.get('token:' + token);
+        if (!tokenData) return json({ success: false, error: "Claim link expired" });
+        await env.KEYS.delete('token:' + token);
+        const key = 'CS-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        const pendingExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+        await env.KEYS.put(key, JSON.stringify({ expiry: pendingExpiry, pending: true }));
+        return json({ success: true, key: key, expiry: pendingExpiry });
       }
-      const url = new URL(`${WORKER_URL}/discord-command`);
-      url.searchParams.set("command", cmd);
-      url.searchParams.set("pw", ADMIN_PASSWORD);
-      if (timeParam) url.searchParams.set("time", timeParam);
 
-      const output = document.getElementById('output');
-      output.textContent = "⏳ Sending…";
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.success) {
-          output.innerHTML = `<span class="success">✅ ${data.message}</span>`;
-        } else {
-          output.innerHTML = `<span class="error">❌ ${data.error}</span>`;
-          if (data.error === "Wrong password") {
-            alert("Incorrect password. Please re-enter.");
-            ADMIN_PASSWORD = prompt("Enter Admin Password:");
+      // 3. Validate Key
+      if (path === "/validate") {
+        const key = url.searchParams.get("key");
+        const deviceId = url.searchParams.get("deviceId");
+        if (!key || !deviceId) return json({ valid: false, error: "Missing parameters" });
+        const storedData = await env.KEYS.get(key);
+        if (!storedData) return json({ valid: false, error: "Key not found" });
+        const data = JSON.parse(storedData);
+
+        if (data.pending === true) {
+          const expiryTime = new Date(data.expiry).getTime();
+          if (Date.now() > expiryTime) {
+            await env.KEYS.delete(key);
+            return json({ valid: false, error: "Key expired (10 min window)" });
+          }
+          const activeExpiry = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+          await env.KEYS.put(key, JSON.stringify({ deviceId: deviceId, expiry: activeExpiry, pending: false }));
+          return json({ valid: true, expiry: activeExpiry });
+        }
+
+        if (data.deviceId && data.deviceId !== deviceId) {
+          return json({ valid: false, error: "Key already used on a different device" });
+        }
+        const expiryTime = new Date(data.expiry).getTime();
+        if (Date.now() > expiryTime) {
+          await env.KEYS.delete(key);
+          return json({ valid: false, error: "Key expired" });
+        }
+        return json({ valid: true, expiry: data.expiry });
+      }
+
+      // 4. Admin: Create Key (Manual URL) – old method
+      if (path === "/admin") {
+        const key = url.searchParams.get("key");
+        const days = url.searchParams.get("days");
+        const pw = url.searchParams.get("pw");
+        if (!key || !pw) return new Response("Missing parameters", { headers: corsHeaders });
+        if (pw !== ADMIN_PASSWORD) return json({ success: false, error: "Wrong password" });
+        let expiry;
+        if (!days || days === "0") expiry = null;
+        else expiry = new Date(Date.now() + parseInt(days) * 24 * 60 * 60 * 1000).toISOString();
+        await env.KEYS.put(key, JSON.stringify({ deviceId: "ADMIN", expiry: expiry, pending: false }));
+        return json({ success: true, expiry: expiry });
+      }
+
+      // ==========================================
+      // 🚨 DISCORD COMMAND CENTER (Admin Panel)
+      // ==========================================
+      if (path === "/discord-command") {
+        const command = url.searchParams.get("command") || "";
+        const pw = url.searchParams.get("pw");
+        const timeParam = url.searchParams.get("time") || "";
+
+        if (!command || pw !== ADMIN_PASSWORD) {
+          return json({ success: false, error: "Invalid command or password" });
+        }
+
+        let responseText = "";
+        let success = true;
+
+        const parts = command.trim().split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+
+        if (cmd === "list") {
+          const list = await env.KEYS.list();
+          const keys = list.keys.map(k => {
+            const data = JSON.parse(k.value);
+            return { key: k.name, expiry: data.expiry, pending: data.pending };
+          });
+          responseText = "📋 **Active Keys:**\n" + (keys.length ? keys.map(k => 
+            `\`${k.key}\` — ${k.expiry ? "⏳ " + formatTimeLeft(k.expiry) : "♾️ Permanent"}`
+          ).join("\n") : "No keys found");
+        }
+        else if (cmd === "perm") {
+          const newKey = 'PERM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+          await env.KEYS.put(newKey, JSON.stringify({ deviceId: "ADMIN", expiry: null, pending: false }));
+          responseText = `✅ **Permanent Key Created:** \`${newKey}\``;
+        }
+        else if (cmd === "create") {
+          const duration = timeParam || parts[1] || "1d";
+          const milliseconds = parseDuration(duration);
+          if (!milliseconds) {
+            responseText = "❌ Invalid duration. Use `1d`, `1w`, `1m`, `1y`.";
+            success = false;
+          } else {
+            const newKey = 'CS-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            const expiry = new Date(Date.now() + milliseconds).toISOString();
+            await env.KEYS.put(newKey, JSON.stringify({ deviceId: "ADMIN", expiry: expiry, pending: false }));
+            responseText = `✅ **Key Created:** \`${newKey}\` (expires ${formatTimeLeft(expiry)})`;
           }
         }
-      } catch (e) {
-        output.innerHTML = `<span class="error">❌ Network error: ${e.message}</span>`;
-      }
-    }
-
-    // ========== ACTIONS ==========
-    function createKey() {
-      const duration = document.getElementById('duration').value;
-      if (duration === "perm") run("perm");
-      else run("create", duration);
-    }
-
-    function revokeKey() {
-      const key = document.getElementById('revokeKey').value.trim();
-      if (!key) return alert("Please enter a key");
-      run("revoke " + key);
-    }
-
-    function runCustom() {
-      const cmd = document.getElementById('customCmd').value.trim();
-      if (!cmd) return alert("Please enter a command");
-      run(cmd);
-    }
-
-    // ========== FETCH KEYS ==========
-    async function fetchKeys() {
-      if (!ADMIN_PASSWORD) {
-        ADMIN_PASSWORD = prompt("Enter Admin Password:");
-        if (!ADMIN_PASSWORD) return;
-      }
-      const url = `${WORKER_URL}/list-keys?pw=${encodeURIComponent(ADMIN_PASSWORD)}`;
-      try {
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.success) {
-          keyData = data.keys;
-          renderKeys();
-        } else {
-          alert("Failed to fetch keys: " + data.error);
-          if (data.error === "Wrong password") {
-            ADMIN_PASSWORD = prompt("Enter Admin Password:");
-            fetchKeys();
+        else if (cmd === "revoke") {
+          const keyToRevoke = parts.slice(1).join(" ").trim();
+          if (!keyToRevoke) {
+            responseText = "❌ Specify a key to revoke. Example: `revoke CS-ABC123`";
+            success = false;
+          } else {
+            await env.KEYS.delete(keyToRevoke);
+            responseText = `✅ **Key Revoked:** \`${keyToRevoke}\``;
           }
         }
-      } catch (e) {
-        alert("Network error: " + e.message);
-      }
-    }
-
-    function renderKeys() {
-      const keyList = document.getElementById('keyList');
-      keyList.innerHTML = "";
-      if (!keyData.length) {
-        keyList.innerHTML = "<div style='color:#fcf6ba;'>No keys found.</div>";
-        return;
-      }
-      keyData.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'key-item';
-        const name = document.createElement('span');
-        name.className = 'key-name';
-        name.textContent = item.key;
-        const countdown = document.createElement('span');
-        countdown.className = 'key-countdown';
-        countdown.dataset.expiry = item.expiry;
-        div.appendChild(name);
-        div.appendChild(countdown);
-        keyList.appendChild(div);
-      });
-      updateCountdowns();
-      setInterval(updateCountdowns, 1000);
-    }
-
-    function updateCountdowns() {
-      document.querySelectorAll('.key-countdown').forEach(el => {
-        const expiry = el.dataset.expiry;
-        if (!expiry) {
-          el.textContent = "♾️ Permanent";
-          return;
+        else if (cmd === "help") {
+          responseText = "🛠️ **Commands:**\n- `list` - View all keys\n- `perm` - Create permanent key\n- `create 1d|1w|1m|1y` - Create key with duration\n- `revoke <key>` - Revoke a key";
+        } else {
+          responseText = "❌ Unknown command";
+          success = false;
         }
-        const diff = new Date(expiry) - Date.now();
-        if (diff <= 0) {
-          el.textContent = "⛔ Expired";
-          return;
+
+        if (success) {
+          await fetch(DISCORD_ADMIN_WEBHOOK, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: responseText })
+          });
         }
-        const days = Math.floor(diff / (1000*60*60*24));
-        const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-        const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
-        const secs = Math.floor((diff % (1000*60)) / 1000);
-        el.textContent = `${days}d-${hours}h-${mins}m-${secs}s`;
-      });
+
+        return json({ success: success, message: responseText });
+      }
+
+      // ==========================================
+      // 🔑 LIST KEYS AS JSON (for admin panel)
+      // ==========================================
+      if (path === "/list-keys") {
+        const pw = url.searchParams.get("pw");
+        if (pw !== ADMIN_PASSWORD) return json({ success: false, error: "Wrong password" });
+        const list = await env.KEYS.list();
+        const keys = list.keys.map(k => {
+          const data = JSON.parse(k.value);
+          return { key: k.name, expiry: data.expiry, pending: data.pending };
+        });
+        return json({ success: true, keys });
+      }
+
+      return json({ error: "Not found" });
+    } catch (error) {
+      return json({ error: "Server Error", details: error.message });
     }
-  </script>
-</body>
-</html>
+  },
+};
+
+// Helper: Parse duration string to milliseconds
+function parseDuration(str) {
+  const match = str.match(/^(\d+)([dwmhy])$/i);
+  if (!match) return null;
+  const num = parseInt(match[1]);
+  const unit = match[2].toLowerCase();
+  const ms = {
+    d: 24 * 60 * 60 * 1000,
+    w: 7 * 24 * 60 * 60 * 1000,
+    m: 30 * 24 * 60 * 60 * 1000,
+    y: 365 * 24 * 60 * 60 * 1000
+  };
+  return num * ms[unit];
+}
+
+// Helper: Format time left as "Xd-Xh-Xm-Xs"
+function formatTimeLeft(isoDate) {
+  const diff = new Date(isoDate) - Date.now();
+  if (diff <= 0) return "expired";
+  const days = Math.floor(diff / (1000*60*60*24));
+  const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+  const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
+  const secs = Math.floor((diff % (1000*60)) / 1000);
+  return `${days}d-${hours}h-${mins}m-${secs}s`;
+}
+
+function json(obj) {
+  return new Response(JSON.stringify(obj), {
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
