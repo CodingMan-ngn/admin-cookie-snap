@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="yes">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cookie Snap Admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 500px;
+      margin: 2rem auto;
+      padding: 20px;
+      background: #1e1e2e;
+      color: #ffffff;
+    }
+    h1 { color: #a6e3a1; }
+    button {
+      display: block;
+      width: 100%;
+      margin: 10px 0;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #89b4fa;
+      color: #1e1e2e;
+      font-weight: bold;
+    }
+    button:hover { background: #b4befe; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: none;
+      box-sizing: border-box;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      background: #313244;
+      border-radius: 8px;
+      min-height: 50px;
+      white-space: pre-wrap;
+    }
+    .error { color: #f38ba8; }
+    .success { color: #a6e3a1; }
+  </style>
+</head>
+<body>
+  <h1>🍪 Cookie Snap Admin Panel</h1>
+
+  <button onclick="run('list')">📋 List All Keys</button>
+  <button onclick="run('perm')">🔑 Create Permanent Key</button>
+
+  <input type="text" id="revokeKey" placeholder="Enter key to revoke (e.g., CS-ABC123)">
+  <button onclick="revoke()">❌ Revoke Key</button>
+
+  <input type="text" id="customCmd" placeholder="Custom command (e.g., revoke CS-123)">
+  <button onclick="runCustom()">▶️ Run Custom Command</button>
+
+  <div id="output">Waiting for command…</div>
+
+  <script>
+    // ⚙️ CONFIGURATION
+    const WORKER_URL = "https://cookie-snap-keys.j26064135.workers.dev";
+    const ADMIN_PASSWORD = "SUPER_SECRET_PASSWORD"; // Must match the Worker's password
+
+    async function run(cmd) {
+      const url = `${WORKER_URL}/discord-command?command=${encodeURIComponent(cmd)}&pw=${encodeURIComponent(ADMIN_PASSWORD)}`;
+      const output = document.getElementById('output');
+      output.textContent = "⏳ Sending command…";
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success) {
+          output.innerHTML = `<span class="success">✅ ${data.message || 'Command executed'}</span>`;
+        } else {
+          output.innerHTML = `<span class="error">❌ ${data.error || 'Error'}</span>`;
+        }
+      } catch (e) {
+        output.innerHTML = `<span class="error">❌ Network error: ${e.message}</span>`;
+      }
+    }
+
+    function revoke() {
+      const key = document.getElementById('revokeKey').value.trim();
+      if (!key) {
+        alert("Please enter a key to revoke.");
+        return;
+      }
+      run("revoke " + key);
+    }
+
+    function runCustom() {
+      const cmd = document.getElementById('customCmd').value.trim();
+      if (!cmd) {
+        alert("Please enter a command.");
+        return;
+      }
+      run(cmd);
+    }
+  </script>
+</body>
+</html>
