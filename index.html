@@ -259,7 +259,8 @@
 
     function revokeKey(key) {
       if (!key) return;
-      if (!confirm(`Revoke key ${key}? This cannot be undone.`)) return;
+      // Confirmation popup before revoking ANY key (including permanent)
+      if (!confirm(`Revoke key ${key}?\nThis cannot be undone.`)) return;
       run("revoke " + key).then(() => {
         setTimeout(fetchKeys, 500); // auto-refresh after revoke
       });
@@ -364,14 +365,12 @@
         const actions = document.createElement('div');
         actions.className = 'key-actions';
 
-        // Copy Button
         const copyBtn = document.createElement('button');
         copyBtn.className = 'btn btn-sm';
         copyBtn.textContent = '📋 Copy';
         copyBtn.onclick = () => copyKey(item.key);
         actions.appendChild(copyBtn);
 
-        // Revoke Button
         const revokeBtn = document.createElement('button');
         revokeBtn.className = 'btn btn-sm btn-danger';
         revokeBtn.textContent = '❌ Revoke';
