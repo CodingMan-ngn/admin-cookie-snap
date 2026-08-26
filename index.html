@@ -20,7 +20,7 @@
     /* ========== Golden Texture Card ========== */
     .golden-card {
       width: 100%;
-      max-width: 600px;
+      max-width: 700px;
       border-radius: 16px;
       position: relative;
       overflow: hidden;
@@ -118,9 +118,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
     }
     .key-name { font-family: monospace; color: #fcf6ba; font-size: 1.1rem; font-weight: bold; }
     .key-countdown { font-size: 0.9rem; color: #ffd700; font-weight: 600; }
+    .key-profile { font-size: 0.85rem; color: #a6e3a1; margin-top: 4px; }
+    .key-device { font-size: 0.8rem; color: #89b4fa; margin-top: 4px; }
     #output {
       margin-top: 20px;
       padding: 15px;
@@ -156,6 +159,10 @@
           <option value="perm">Permanent</option>
         </select>
       </div>
+      <div class="input-group">
+        <label for="profile">Profile Name (optional):</label>
+        <input type="text" id="profile" placeholder="e.g., Main_Profile">
+      </div>
       <button class="btn btn-success" onclick="createKey()">➕ Create Key</button>
     </div>
 
@@ -180,8 +187,8 @@
     <div class="inner-card">
       <div class="card-title">⚙️ Custom Command</div>
       <div class="input-group">
-        <label for="customCmd">Any command (e.g., revoke CS-123)</label>
-        <input type="text" id="customCmd" placeholder="e.g., revoke CS-123">
+        <label for="customCmd">Any command (e.g., create 1d MyProfile)</label>
+        <input type="text" id="customCmd" placeholder="e.g., create 1d MyProfile">
       </div>
       <button class="btn" onclick="runCustom()">▶️ Run</button>
     </div>
@@ -205,7 +212,7 @@
 
     let keyData = [];
 
-    async function run(cmd, timeParam = "") {
+    async function run(cmd, timeParam = "", profile = "") {
       if (!ADMIN_PASSWORD) {
         ADMIN_PASSWORD = prompt("Enter Admin Password:");
         if (!ADMIN_PASSWORD) return;
@@ -214,6 +221,7 @@
       url.searchParams.set("command", cmd);
       url.searchParams.set("pw", ADMIN_PASSWORD);
       if (timeParam) url.searchParams.set("time", timeParam);
+      if (profile) url.searchParams.set("profile", profile);
 
       const output = document.getElementById('output');
       output.textContent = "⏳ Sending…";
@@ -236,8 +244,9 @@
 
     function createKey() {
       const duration = document.getElementById('duration').value;
-      if (duration === "perm") run("perm");
-      else run("create", duration);
+      const profile = document.getElementById('profile').value.trim();
+      if (duration === "perm") run("perm", "", profile);
+      else run("create", duration, profile);
     }
 
     function revokeKey() {
@@ -249,7 +258,15 @@
     function runCustom() {
       const cmd = document.getElementById('customCmd').value.trim();
       if (!cmd) return alert("Please enter a command");
-      run(cmd);
+      // Parse possible time and profile from command string
+      const parts = cmd.split(/\s+/);
+      if (parts[0].toLowerCase() === "create") {
+        const timeParam = parts[1] || "1d";
+        const profile = parts.slice(2).join(" ") || "";
+        run("create", timeParam, profile);
+      } else {
+        run(cmd);
+      }
     }
 
     async function fetchKeys() {
@@ -286,14 +303,38 @@
       keyData.forEach(item => {
         const div = document.createElement('div');
         div.className = 'key-item';
+
+        const left = document.createElement('div');
         const name = document.createElement('span');
         name.className = 'key-name';
         name.textContent = item.key;
+        left.appendChild(name);
+
+        // Show profile if available
+        if (item.profile) {
+          const profile = document.createElement('div');
+          profile.className = 'key-profile';
+          profile.textContent = `👤 ${item.profile}`;
+          left.appendChild(profile);
+        }
+
+        // Show device info if available
+        if (item.deviceInfo) {
+          const devInfo = document.createElement('div');
+          devInfo.className = 'key-device';
+          devInfo.textContent = `💻 ${item.deviceInfo.platform} | IP: ${item.deviceInfo.ip} | UA: ${item.deviceInfo.userAgent?.substring(0, 40)}...`;
+          left.appendChild(devInfo);
+        }
+
+        div.appendChild(left);
+
+        const right = document.createElement('div');
         const countdown = document.createElement('span');
         countdown.className = 'key-countdown';
         countdown.dataset.expiry = item.expiry;
-        div.appendChild(name);
-        div.appendChild(countdown);
+        right.appendChild(countdown);
+        div.appendChild(right);
+
         keyList.appendChild(div);
       });
       updateCountdowns();
