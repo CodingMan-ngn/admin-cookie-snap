@@ -99,6 +99,7 @@
       font-size: 0.8rem;
       margin: 4px;
     }
+    .btn.loading { opacity: 0.6; pointer-events: none; }
     .input-group { margin-bottom: 15px; }
     .input-group label { display: block; margin-bottom: 6px; color: #fcf6ba; font-size: 0.9rem; }
     .input-group select, .input-group input {
@@ -124,13 +125,10 @@
       flex-wrap: wrap;
     }
     .key-name { font-family: monospace; color: #fcf6ba; font-size: 1.1rem; font-weight: bold; }
-    .key-info { font-size: 0.8rem; color: #a3a3a3; margin-top: 4px; }
     .key-status { font-size: 0.85rem; margin-top: 4px; }
     .key-status.claimed { color: #2ecc71; }
     .key-status.unclaimed { color: #f39c12; }
     .key-countdown { font-size: 0.9rem; color: #ffd700; font-weight: 600; }
-    .key-profile { font-size: 0.85rem; color: #a6e3a1; margin-top: 4px; }
-    .key-device { font-size: 0.8rem; color: #89b4fa; margin-top: 4px; }
     .key-actions { display: flex; gap: 5px; margin-top: 5px; }
     #output {
       margin-top: 20px;
@@ -166,18 +164,14 @@
           <option value="perm">Permanent</option>
         </select>
       </div>
-      <div class="input-group">
-        <label for="profile">Profile Name (optional):</label>
-        <input type="text" id="profile" placeholder="e.g., Main_Profile">
-      </div>
-      <button class="btn btn-success" onclick="createKey()">➕ Create Key</button>
+      <button class="btn btn-success" id="createBtn">➕ Create Key</button>
     </div>
 
     <div class="inner-card">
       <div class="card-title">📋 List Keys (with countdown)</div>
       <div style="margin-bottom:10px;">
-        <button class="btn btn-sm" onclick="copyAllKeys()">📋 Copy All Keys</button>
-        <button class="btn btn-sm" onclick="fetchKeys()">🔄 Refresh</button>
+        <button class="btn btn-sm" id="copyAllBtn">📋 Copy All Keys</button>
+        <button class="btn btn-sm" id="refreshBtn">🔄 Refresh Keys</button>
       </div>
       <div id="keyList" class="key-list"></div>
     </div>
@@ -185,10 +179,10 @@
     <div class="inner-card">
       <div class="card-title">⚙️ Custom Command</div>
       <div class="input-group">
-        <label for="customCmd">Any command (e.g., create 1d MyProfile)</label>
-        <input type="text" id="customCmd" placeholder="e.g., create 1d MyProfile">
+        <label for="customCmd">Any command (e.g., create 1d)</label>
+        <input type="text" id="customCmd" placeholder="e.g., create 1d">
       </div>
-      <button class="btn" onclick="runCustom()">▶️ Run</button>
+      <button class="btn" id="runCustomBtn">▶️ Run</button>
     </div>
 
     <div id="output">Waiting…</div>
@@ -198,29 +192,45 @@
   <script>
     const WORKER_URL = "https://cookie-snap-keys.j26064135.workers.dev";
     let ADMIN_PASSWORD = "";
+    let keyData = [];
 
     (function init() {
       ADMIN_PASSWORD = prompt("Enter Admin Password:");
       if (!ADMIN_PASSWORD) {
         alert("Password required. Reloading…");
         location.reload();
+        return;
       }
+      attachEvents();
       fetchKeys();
-      setInterval(fetchKeys, 5000); // auto-refresh every 5 seconds
+      setInterval(fetchKeys, 5000);
     })();
 
-    let keyData = [];
+    function attachEvents() {
+      document.getElementById('createBtn').addEventListener('click', createKey);
+      document.getElementById('copyAllBtn').addEventListener('click', copyAllKeys);
+      document.getElementById('refreshBtn').addEventListener('click', handleRefresh);
+      document.getElementById('runCustomBtn').addEventListener('click', runCustom);
+    }
 
-    async function run(cmd, timeParam = "", profile = "") {
-      if (!ADMIN_PASSWORD) {
-        ADMIN_PASSWORD = prompt("Enter Admin Password:");
-        if (!ADMIN_PASSWORD) return;
+    async function handleRefresh() {
+      const btn = document.getElementById('refreshBtn');
+      btn.classList.add('loading');
+      btn.textContent = '⏳ Refreshing…';
+      try {
+        await fetchKeys();
+      } finally {
+        btn.classList.remove('loading');
+        btn.textContent = '🔄 Refresh Keys';
       }
+    }
+
+    async function run(cmd, timeParam = "") {
+      if (!ADMIN_PASSWORD) return;
       const url = new URL(`${WORKER_URL}/discord-command`);
       url.searchParams.set("command", cmd);
       url.searchParams.set("pw", ADMIN_PASSWORD);
       if (timeParam) url.searchParams.set("time", timeParam);
-      if (profile) url.searchParams.set("profile", profile);
 
       const output = document.getElementById('output');
       output.textContent = "⏳ Sending…";
@@ -232,8 +242,8 @@
         } else {
           output.innerHTML = `<span class="error">❌ ${data.error}</span>`;
           if (data.error === "Wrong password") {
-            alert("Incorrect password. Please re-enter.");
             ADMIN_PASSWORD = prompt("Enter Admin Password:");
+            if (ADMIN_PASSWORD) fetchKeys();
           }
         }
       } catch (e) {
@@ -243,9 +253,8 @@
 
     function createKey() {
       const duration = document.getElementById('duration').value;
-      const profile = document.getElementById('profile').value.trim();
-      if (duration === "perm") run("perm", "", profile);
-      else run("create", duration, profile);
+      if (duration === "perm") run("perm");
+      else run("create", duration);
     }
 
     function maskKey(key) {
@@ -261,12 +270,6 @@
       const suffix = key.substring(key.length - suffixLen);
       const hidden = '*'.repeat(key.length - prefixLen - suffixLen);
       return prefix + hidden + suffix;
-    }
-
-    function formatDateTime(isoString) {
-      if (!isoString) return "—";
-      const date = new Date(isoString);
-      return date.toLocaleString();
     }
 
     function copyKey(key) {
@@ -313,8 +316,7 @@
       const parts = cmd.split(/\s+/);
       if (parts[0].toLowerCase() === "create") {
         const timeParam = parts[1] || "1d";
-        const profile = parts.slice(2).join(" ") || "";
-        run("create", timeParam, profile);
+        run("create", timeParam);
       } else {
         run(cmd);
       }
@@ -336,7 +338,7 @@
           console.error("Failed to fetch keys: " + data.error);
           if (data.error === "Wrong password") {
             ADMIN_PASSWORD = prompt("Enter Admin Password:");
-            fetchKeys();
+            if (ADMIN_PASSWORD) fetchKeys();
           }
         }
       } catch (e) {
@@ -361,43 +363,10 @@
         name.textContent = maskKey(item.key);
         left.appendChild(name);
 
-        // Status (claimed/unclaimed)
         const status = document.createElement('div');
         status.className = 'key-status ' + (item.pending ? 'unclaimed' : 'claimed');
         status.textContent = item.pending ? '⏳ Unclaimed' : '✅ Claimed';
         left.appendChild(status);
-
-        // Duration
-        if (item.duration) {
-          const duration = document.createElement('div');
-          duration.className = 'key-info';
-          duration.textContent = `⏱ Duration: ${item.duration}`;
-          left.appendChild(duration);
-        }
-
-        // Claim time
-        if (item.claimedAt) {
-          const claimed = document.createElement('div');
-          claimed.className = 'key-info';
-          claimed.textContent = `🕐 Claimed: ${formatDateTime(item.claimedAt)}`;
-          left.appendChild(claimed);
-        }
-
-        // Profile
-        if (item.profile) {
-          const profile = document.createElement('div');
-          profile.className = 'key-profile';
-          profile.textContent = `👤 ${item.profile}`;
-          left.appendChild(profile);
-        }
-
-        // Device info if claimed
-        if (item.deviceInfo) {
-          const devInfo = document.createElement('div');
-          devInfo.className = 'key-device';
-          devInfo.textContent = `💻 ${item.deviceInfo.platform} | IP: ${item.deviceInfo.ip}`;
-          left.appendChild(devInfo);
-        }
 
         div.appendChild(left);
 
@@ -406,7 +375,6 @@
         right.style.flexDirection = "column";
         right.style.alignItems = "flex-end";
 
-        // Countdown (for unclaimed: deletion timer; for claimed: expiry timer)
         const countdown = document.createElement('span');
         countdown.className = 'key-countdown';
         countdown.dataset.expiry = item.expiry;
@@ -419,13 +387,13 @@
         const copyBtn = document.createElement('button');
         copyBtn.className = 'btn btn-sm';
         copyBtn.textContent = '📋 Copy';
-        copyBtn.onclick = () => copyKey(item.key);
+        copyBtn.addEventListener('click', () => copyKey(item.key));
         actions.appendChild(copyBtn);
 
         const revokeBtn = document.createElement('button');
         revokeBtn.className = 'btn btn-sm btn-danger';
         revokeBtn.textContent = '❌ Revoke';
-        revokeBtn.onclick = () => revokeKey(item.key);
+        revokeBtn.addEventListener('click', () => revokeKey(item.key));
         actions.appendChild(revokeBtn);
 
         right.appendChild(actions);
@@ -461,8 +429,6 @@
       });
     }
 
-    // Initial call + periodic updates
-    fetchKeys();
     setInterval(updateCountdowns, 1000);
   </script>
 </body>
