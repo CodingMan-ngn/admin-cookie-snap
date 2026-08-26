@@ -124,6 +124,9 @@
       flex-wrap: wrap;
     }
     .key-name { font-family: monospace; color: #fcf6ba; font-size: 1.1rem; font-weight: bold; }
+    .key-status { font-size: 0.85rem; margin-top: 4px; }
+    .key-status.claimed { color: #2ecc71; }
+    .key-status.unclaimed { color: #f39c12; }
     .key-countdown { font-size: 0.9rem; color: #ffd700; font-weight: 600; }
     .key-profile { font-size: 0.85rem; color: #a6e3a1; margin-top: 4px; }
     .key-device { font-size: 0.8rem; color: #89b4fa; margin-top: 4px; }
@@ -202,6 +205,7 @@
         location.reload();
       }
       fetchKeys();
+      setInterval(fetchKeys, 5000); // auto-refresh every 5 seconds
     })();
 
     let keyData = [];
@@ -243,9 +247,14 @@
       else run("create", duration, profile);
     }
 
+    function maskKey(key) {
+      if (key.length <= 8) return key;
+      return key.substring(0, 4) + "..." + key.substring(key.length - 4);
+    }
+
     function copyKey(key) {
       navigator.clipboard.writeText(key).then(() => {
-        alert(`Key ${key} copied!`);
+        alert(`Key ${maskKey(key)} copied!`);
       }).catch(() => {
         const ta = document.createElement('textarea');
         ta.value = key;
@@ -253,16 +262,15 @@
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        alert(`Key ${key} copied!`);
+        alert(`Key ${maskKey(key)} copied!`);
       });
     }
 
     function revokeKey(key) {
       if (!key) return;
-      // Confirmation popup before revoking ANY key (including permanent)
-      if (!confirm(`Revoke key ${key}?\nThis cannot be undone.`)) return;
+      if (!confirm(`Revoke key ${maskKey(key)}?\nThis cannot be undone.`)) return;
       run("revoke " + key).then(() => {
-        setTimeout(fetchKeys, 500); // auto-refresh after revoke
+        setTimeout(fetchKeys, 500);
       });
     }
 
@@ -308,14 +316,14 @@
           keyData = data.keys;
           renderKeys();
         } else {
-          alert("Failed to fetch keys: " + data.error);
+          console.error("Failed to fetch keys: " + data.error);
           if (data.error === "Wrong password") {
             ADMIN_PASSWORD = prompt("Enter Admin Password:");
             fetchKeys();
           }
         }
       } catch (e) {
-        alert("Network error: " + e.message);
+        console.error("Network error: " + e.message);
       }
     }
 
@@ -333,9 +341,16 @@
         const left = document.createElement('div');
         const name = document.createElement('span');
         name.className = 'key-name';
-        name.textContent = item.key;
+        name.textContent = maskKey(item.key);
         left.appendChild(name);
 
+        // Status (claimed/unclaimed)
+        const status = document.createElement('div');
+        status.className = 'key-status ' + (item.pending ? 'unclaimed' : 'claimed');
+        status.textContent = item.pending ? '⏳ Unclaimed' : '✅ Claimed';
+        left.appendChild(status);
+
+        // Profile
         if (item.profile) {
           const profile = document.createElement('div');
           profile.className = 'key-profile';
@@ -343,6 +358,7 @@
           left.appendChild(profile);
         }
 
+        // Device info if claimed
         if (item.deviceInfo) {
           const devInfo = document.createElement('div');
           devInfo.className = 'key-device';
@@ -357,9 +373,11 @@
         right.style.flexDirection = "column";
         right.style.alignItems = "flex-end";
 
+        // Countdown (for unclaimed: deletion timer; for claimed: expiry timer)
         const countdown = document.createElement('span');
         countdown.className = 'key-countdown';
         countdown.dataset.expiry = item.expiry;
+        countdown.dataset.pending = item.pending ? 'true' : 'false';
         right.appendChild(countdown);
 
         const actions = document.createElement('div');
@@ -383,28 +401,36 @@
         keyList.appendChild(div);
       });
       updateCountdowns();
-      setInterval(updateCountdowns, 1000);
     }
 
     function updateCountdowns() {
       document.querySelectorAll('.key-countdown').forEach(el => {
         const expiry = el.dataset.expiry;
+        const pending = el.dataset.pending === 'true';
         if (!expiry) {
           el.textContent = "♾️ Permanent";
           return;
         }
         const diff = new Date(expiry) - Date.now();
         if (diff <= 0) {
-          el.textContent = "⛔ Expired";
+          el.textContent = pending ? "⏳ Deleting..." : "⛔ Expired";
           return;
         }
         const days = Math.floor(diff / (1000*60*60*24));
         const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
         const mins = Math.floor((diff % (1000*60*60)) / (1000*60));
         const secs = Math.floor((diff % (1000*60)) / 1000);
-        el.textContent = `${days}d-${hours}h-${mins}m-${secs}s`;
+        if (pending) {
+          el.textContent = `Deleting in ${mins}m ${secs}s`;
+        } else {
+          el.textContent = `${days}d-${hours}h-${mins}m-${secs}s`;
+        }
       });
     }
+
+    // Initial call + periodic updates
+    fetchKeys();
+    setInterval(updateCountdowns, 1000);
   </script>
 </body>
 </html>
