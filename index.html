@@ -178,14 +178,7 @@
       <div id="keyList" class="key-list"></div>
     </div>
 
-    <div class="inner-card">
-      <div class="card-title">❌ Revoke Key</div>
-      <div class="input-group">
-        <label for="revokeKey">Enter key to revoke</label>
-        <input type="text" id="revokeKey" placeholder="e.g., CS-ABC123">
-      </div>
-      <button class="btn btn-danger" onclick="revokeKey()">❌ Revoke</button>
-    </div>
+    <!-- Removed the separate Revoke Key section -->
 
     <div class="inner-card">
       <div class="card-title">⚙️ Custom Command</div>
@@ -252,22 +245,23 @@
       else run("create", duration, profile);
     }
 
-    function revokeKey() {
-      const key = document.getElementById('revokeKey').value.trim();
-      if (!key) return alert("Please enter a key");
-      run("revoke " + key);
+    // Revoke a key (with confirm) and auto-refresh
+    function revokeKey(key) {
+      if (!key) return;
+      if (!confirm(`Revoke key ${key}? This will permanently delete it.`)) return;
+      run("revoke " + key).then(() => {
+        // Wait a short moment then refresh list
+        setTimeout(() => fetchKeys(), 500);
+      });
     }
 
+    // Optional: Expire a key (delete immediately) – also with confirm
     function expireKey(key) {
       if (!key) return;
       if (!confirm(`Expire key ${key}? It will be removed immediately.`)) return;
-      run("expire " + key);
-    }
-
-    function revokeSpecificKey(key) {
-      if (!key) return;
-      if (!confirm(`Revoke key ${key}?`)) return;
-      run("revoke " + key);
+      run("expire " + key).then(() => {
+        setTimeout(() => fetchKeys(), 500);
+      });
     }
 
     function copyKey(key) {
@@ -383,18 +377,21 @@
         const actions = document.createElement('div');
         actions.className = 'key-actions';
 
+        // COPY button
         const copyBtn = document.createElement('button');
         copyBtn.className = 'btn btn-sm';
         copyBtn.textContent = '📋 Copy';
         copyBtn.onclick = () => copyKey(item.key);
         actions.appendChild(copyBtn);
 
+        // REVOKE button (with confirm)
         const revokeBtn = document.createElement('button');
         revokeBtn.className = 'btn btn-sm btn-danger';
         revokeBtn.textContent = '❌ Revoke';
-        revokeBtn.onclick = () => revokeSpecificKey(item.key);
+        revokeBtn.onclick = () => revokeKey(item.key);
         actions.appendChild(revokeBtn);
 
+        // Optional: EXPIRE button (remove if not needed)
         const expireBtn = document.createElement('button');
         expireBtn.className = 'btn btn-sm';
         expireBtn.textContent = '⏳ Expire';
@@ -431,4 +428,4 @@
     }
   </script>
 </body>
->
+</html>
