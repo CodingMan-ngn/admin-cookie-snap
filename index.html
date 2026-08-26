@@ -18,7 +18,7 @@
     }
     .golden-card {
       width: 100%;
-      max-width: 700px;
+      max-width: 800px;
       border-radius: 16px;
       position: relative;
       overflow: hidden;
@@ -93,6 +93,12 @@
     }
     .btn-danger { background: linear-gradient(135deg, #e74c3c, #ff6b6b); color: white; }
     .btn-success { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+    .btn-sm {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      margin: 4px;
+    }
     .input-group { margin-bottom: 15px; }
     .input-group label { display: block; margin-bottom: 6px; color: #fcf6ba; font-size: 0.9rem; }
     .input-group select, .input-group input {
@@ -121,6 +127,7 @@
     .key-countdown { font-size: 0.9rem; color: #ffd700; font-weight: 600; }
     .key-profile { font-size: 0.85rem; color: #a6e3a1; margin-top: 4px; }
     .key-device { font-size: 0.8rem; color: #89b4fa; margin-top: 4px; }
+    .key-actions { display: flex; gap: 5px; margin-top: 5px; }
     #output {
       margin-top: 20px;
       padding: 15px;
@@ -164,8 +171,11 @@
 
     <div class="inner-card">
       <div class="card-title">📋 List Keys (with countdown)</div>
+      <div style="margin-bottom:10px;">
+        <button class="btn btn-sm" onclick="copyAllKeys()">📋 Copy All Keys</button>
+        <button class="btn btn-sm" onclick="fetchKeys()">🔄 Refresh</button>
+      </div>
       <div id="keyList" class="key-list"></div>
-      <button class="btn" onclick="fetchKeys()">🔄 Refresh Keys</button>
     </div>
 
     <div class="inner-card">
@@ -248,6 +258,48 @@
       run("revoke " + key);
     }
 
+    function expireKey(key) {
+      if (!key) return;
+      if (!confirm(`Expire key ${key}? It will be removed immediately.`)) return;
+      run("expire " + key);
+    }
+
+    function revokeSpecificKey(key) {
+      if (!key) return;
+      if (!confirm(`Revoke key ${key}?`)) return;
+      run("revoke " + key);
+    }
+
+    function copyKey(key) {
+      navigator.clipboard.writeText(key).then(() => {
+        alert(`Key ${key} copied!`);
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = key;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert(`Key ${key} copied!`);
+      });
+    }
+
+    function copyAllKeys() {
+      if (!keyData.length) return alert("No keys to copy");
+      const text = keyData.map(k => k.key).join('\n');
+      navigator.clipboard.writeText(text).then(() => {
+        alert("All keys copied!");
+      }).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert("All keys copied!");
+      });
+    }
+
     function runCustom() {
       const cmd = document.getElementById('customCmd').value.trim();
       if (!cmd) return alert("Please enter a command");
@@ -319,10 +371,37 @@
         div.appendChild(left);
 
         const right = document.createElement('div');
+        right.style.display = "flex";
+        right.style.flexDirection = "column";
+        right.style.alignItems = "flex-end";
+
         const countdown = document.createElement('span');
         countdown.className = 'key-countdown';
         countdown.dataset.expiry = item.expiry;
         right.appendChild(countdown);
+
+        const actions = document.createElement('div');
+        actions.className = 'key-actions';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn btn-sm';
+        copyBtn.textContent = '📋 Copy';
+        copyBtn.onclick = () => copyKey(item.key);
+        actions.appendChild(copyBtn);
+
+        const revokeBtn = document.createElement('button');
+        revokeBtn.className = 'btn btn-sm btn-danger';
+        revokeBtn.textContent = '❌ Revoke';
+        revokeBtn.onclick = () => revokeSpecificKey(item.key);
+        actions.appendChild(revokeBtn);
+
+        const expireBtn = document.createElement('button');
+        expireBtn.className = 'btn btn-sm';
+        expireBtn.textContent = '⏳ Expire';
+        expireBtn.onclick = () => expireKey(item.key);
+        actions.appendChild(expireBtn);
+
+        right.appendChild(actions);
         div.appendChild(right);
 
         keyList.appendChild(div);
@@ -352,4 +431,4 @@
     }
   </script>
 </body>
-</html>
+>
