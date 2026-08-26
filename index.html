@@ -124,6 +124,7 @@
       flex-wrap: wrap;
     }
     .key-name { font-family: monospace; color: #fcf6ba; font-size: 1.1rem; font-weight: bold; }
+    .key-info { font-size: 0.8rem; color: #a3a3a3; margin-top: 4px; }
     .key-status { font-size: 0.85rem; margin-top: 4px; }
     .key-status.claimed { color: #2ecc71; }
     .key-status.unclaimed { color: #f39c12; }
@@ -248,8 +249,24 @@
     }
 
     function maskKey(key) {
-      if (key.length <= 8) return key;
-      return key.substring(0, 4) + "..." + key.substring(key.length - 4);
+      const dashIndex = key.indexOf('-');
+      if (dashIndex === -1) {
+        if (key.length <= 6) return key;
+        return key.substring(0, 3) + '...' + key.substring(key.length - 3);
+      }
+      const prefixLen = dashIndex + 2;
+      const suffixLen = 1;
+      if (key.length <= prefixLen + suffixLen) return key;
+      const prefix = key.substring(0, prefixLen);
+      const suffix = key.substring(key.length - suffixLen);
+      const hidden = '*'.repeat(key.length - prefixLen - suffixLen);
+      return prefix + hidden + suffix;
+    }
+
+    function formatDateTime(isoString) {
+      if (!isoString) return "—";
+      const date = new Date(isoString);
+      return date.toLocaleString();
     }
 
     function copyKey(key) {
@@ -349,6 +366,22 @@
         status.className = 'key-status ' + (item.pending ? 'unclaimed' : 'claimed');
         status.textContent = item.pending ? '⏳ Unclaimed' : '✅ Claimed';
         left.appendChild(status);
+
+        // Duration
+        if (item.duration) {
+          const duration = document.createElement('div');
+          duration.className = 'key-info';
+          duration.textContent = `⏱ Duration: ${item.duration}`;
+          left.appendChild(duration);
+        }
+
+        // Claim time
+        if (item.claimedAt) {
+          const claimed = document.createElement('div');
+          claimed.className = 'key-info';
+          claimed.textContent = `🕐 Claimed: ${formatDateTime(item.claimedAt)}`;
+          left.appendChild(claimed);
+        }
 
         // Profile
         if (item.profile) {
