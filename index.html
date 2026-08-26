@@ -6,7 +6,6 @@
   <title>Cookie Snap Admin</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #1a1a1a;
@@ -25,21 +24,13 @@
       border-radius: 16px;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(
-        135deg,
-        #bf953f 0%,
-        #fcf6ba 25%,
-        #b38728 50%,
-        #fbf5b7 75%,
-        #aa771c 100%
-      );
+      background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%);
       background-size: 200% 200%;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
       animation: goldShimmer 6s ease infinite;
       transition: transform 0.4s ease, box-shadow 0.4s ease;
       padding: 20px;
     }
-
     .golden-card::after {
       content: "";
       position: absolute;
@@ -47,42 +38,30 @@
       left: -75%;
       width: 50%;
       height: 100%;
-      background: linear-gradient(
-        120deg,
-        transparent,
-        rgba(255, 255, 255, 0.5),
-        transparent
-      );
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.5), transparent);
       transform: skewX(-20deg);
       transition: left 0.6s ease;
     }
-
     .golden-card:hover {
       transform: scale(1.02) translateY(-5px);
-      box-shadow:
-        0 15px 30px rgba(0, 0, 0, 0.4),
-        0 0 25px rgba(255, 215, 0, 0.7);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4), 0 0 25px rgba(255,215,0,0.7);
     }
-
     .golden-card:hover::after {
       left: 125%;
     }
-
     @keyframes goldShimmer {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
-    /* ========== Inner Cards (sub-sections) ========== */
     .inner-card {
       background: rgba(0, 0, 0, 0.6);
       border-radius: 10px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.4);
     }
-
     .card-title {
       font-size: 1.2rem;
       font-weight: 700;
@@ -93,7 +72,6 @@
       align-items: center;
       gap: 8px;
     }
-
     .btn {
       display: flex;
       align-items: center;
@@ -112,35 +90,15 @@
       color: #1a1a1a;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
-
     .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255,215,0,0.5);
     }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #e74c3c, #ff6b6b);
-      color: white;
-    }
-
-    .btn-success {
-      background: linear-gradient(135deg, #2ecc71, #27ae60);
-      color: white;
-    }
-
-    .input-group {
-      margin-bottom: 15px;
-    }
-
-    .input-group label {
-      display: block;
-      margin-bottom: 6px;
-      color: #fcf6ba;
-      font-size: 0.9rem;
-    }
-
-    .input-group select,
-    .input-group input {
+    .btn-danger { background: linear-gradient(135deg, #e74c3c, #ff6b6b); color: white; }
+    .btn-success { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; margin-bottom: 6px; color: #fcf6ba; font-size: 0.9rem; }
+    .input-group select, .input-group input {
       width: 100%;
       padding: 12px;
       border-radius: 8px;
@@ -149,17 +107,8 @@
       color: white;
       font-size: 1rem;
     }
-
-    .input-group select:focus,
-    .input-group input:focus {
-      outline: none;
-      border-color: #fcf6ba;
-    }
-
-    .key-list {
-      margin-top: 10px;
-    }
-
+    .input-group select:focus, .input-group input:focus { outline: none; border-color: #fcf6ba; }
+    .key-list { margin-top: 10px; }
     .key-item {
       background: rgba(0,0,0,0.7);
       border: 1px solid #b38728;
@@ -170,20 +119,8 @@
       justify-content: space-between;
       align-items: center;
     }
-
-    .key-name {
-      font-family: monospace;
-      color: #fcf6ba;
-      font-size: 1.1rem;
-      font-weight: bold;
-    }
-
-    .key-countdown {
-      font-size: 0.9rem;
-      color: #ffd700;
-      font-weight: 600;
-    }
-
+    .key-name { font-family: monospace; color: #fcf6ba; font-size: 1.1rem; font-weight: bold; }
+    .key-countdown { font-size: 0.9rem; color: #ffd700; font-weight: 600; }
     #output {
       margin-top: 20px;
       padding: 15px;
@@ -195,22 +132,10 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
-
     .error { color: #ff6b6b; }
     .success { color: #2ecc71; }
-
-    .footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 0.8rem;
-      color: #fcf6ba;
-    }
-
-    @media (max-width: 600px) {
-      .golden-card {
-        width: 100%;
-      }
-    }
+    .footer { text-align: center; margin-top: 20px; font-size: 0.8rem; color: #fcf6ba; }
+    @media (max-width: 600px) { .golden-card { width: 100%; } }
   </style>
 </head>
 <body>
@@ -268,12 +193,26 @@
   <script>
     // ========== CONFIGURATION ==========
     const WORKER_URL = "https://cookie-snap-keys.j26064135.workers.dev";
-    const ADMIN_PASSWORD = "SUPER_SECRET_PASSWORD"; // CHANGE THIS to match Worker
+    let ADMIN_PASSWORD = ""; // will be set via prompt
+
+    // Ask for password on load
+    (function init() {
+      ADMIN_PASSWORD = prompt("Enter Admin Password:");
+      if (!ADMIN_PASSWORD) {
+        alert("Password required. Reloading…");
+        location.reload();
+      }
+      fetchKeys();
+    })();
 
     let keyData = [];
 
     // ========== COMMAND SENDER ==========
     async function run(cmd, timeParam = "") {
+      if (!ADMIN_PASSWORD) {
+        ADMIN_PASSWORD = prompt("Enter Admin Password:");
+        if (!ADMIN_PASSWORD) return;
+      }
       const url = new URL(`${WORKER_URL}/discord-command`);
       url.searchParams.set("command", cmd);
       url.searchParams.set("pw", ADMIN_PASSWORD);
@@ -288,6 +227,10 @@
           output.innerHTML = `<span class="success">✅ ${data.message}</span>`;
         } else {
           output.innerHTML = `<span class="error">❌ ${data.error}</span>`;
+          if (data.error === "Wrong password") {
+            alert("Incorrect password. Please re-enter.");
+            ADMIN_PASSWORD = prompt("Enter Admin Password:");
+          }
         }
       } catch (e) {
         output.innerHTML = `<span class="error">❌ Network error: ${e.message}</span>`;
@@ -315,6 +258,10 @@
 
     // ========== FETCH KEYS ==========
     async function fetchKeys() {
+      if (!ADMIN_PASSWORD) {
+        ADMIN_PASSWORD = prompt("Enter Admin Password:");
+        if (!ADMIN_PASSWORD) return;
+      }
       const url = `${WORKER_URL}/list-keys?pw=${encodeURIComponent(ADMIN_PASSWORD)}`;
       try {
         const res = await fetch(url);
@@ -324,6 +271,10 @@
           renderKeys();
         } else {
           alert("Failed to fetch keys: " + data.error);
+          if (data.error === "Wrong password") {
+            ADMIN_PASSWORD = prompt("Enter Admin Password:");
+            fetchKeys();
+          }
         }
       } catch (e) {
         alert("Network error: " + e.message);
@@ -373,9 +324,6 @@
         el.textContent = `${days}d-${hours}h-${mins}m-${secs}s`;
       });
     }
-
-    // ========== INITIAL LOAD ==========
-    fetchKeys();
   </script>
 </body>
 </html>
